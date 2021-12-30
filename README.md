@@ -19,7 +19,7 @@ Interact with RBAC configured Cosmos DB
 ### Cosmos DB
 
 - Create a Cosmos DB account, database and a container.
-  - In this sample apps, the database is named "Inventories", and the container is "Tracks".
+  - In these sample apps, the database is named "Inventories", and the container is "Tracks".
 - Following the document [https://docs.microsoft.com/azure/cosmos-db/how-to-setup-rbac](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-rbac),
   - Create roles.
     ```

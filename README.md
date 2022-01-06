@@ -1,5 +1,5 @@
-# CosmosDB_RBAC_Demo
-Interact with RBAC configured Cosmos DB
+# CosmosDB RBAC Demo
+Interaction with RBAC configured Cosmos DB
 
 ## How to use
 

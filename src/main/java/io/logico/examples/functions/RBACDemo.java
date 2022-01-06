@@ -26,7 +26,6 @@ import java.util.Optional;
  */
 public class RBACDemo {
 
-    private static final String ACCOUNT_ENDPOINT = "<Cosmos DB Account Endpoint>";
     private static final String DATABASE = "Inventories";
     private static final String CONTAINER = "Tracks";
 
@@ -38,15 +37,24 @@ public class RBACDemo {
                 authLevel = AuthorizationLevel.ANONYMOUS)
                 HttpRequestMessage<Optional<Track>> request,
             final ExecutionContext context) {
-
         TokenCredential tokenCredential;
         tokenCredential = new DefaultAzureCredentialBuilder().build();
         HttpResponseMessage responseMessage = null;
+
+        String acountEndPoint = System.getenv("ACCOUNT_ENDPOINT");
+        if(acountEndPoint.isEmpty() || acountEndPoint.isBlank()) {
+            HashMap<String, String> responseBody = new HashMap<>();
+            responseBody.put("error", "ACCOUNT_ENDPOINT is not set in Application Settings.");
+            return request.createResponseBuilder(HttpStatus.FAILED_DEPENDENCY)
+                    .body(responseBody)
+                    .header("Content-Type","application/json")
+                    .build();
+        }
         try (CosmosClient client = new CosmosClientBuilder()
-            .endpoint(ACCOUNT_ENDPOINT)
-            .credential(tokenCredential)
-            .gatewayMode()
-            .buildClient()) {
+                .endpoint(acountEndPoint)
+                .credential(tokenCredential)
+                .gatewayMode()
+                .buildClient()) {
             CosmosContainer cosmosContainer = client.getDatabase(DATABASE).getContainer(CONTAINER);
 
             context.getLogger().info(request.getHttpMethod().name().toUpperCase(Locale.ROOT));
@@ -55,34 +63,43 @@ public class RBACDemo {
                     String sql = "select c.id, c.purchaseDate, c.remarks, c.type from c";
                     context.getLogger().info(sql);
                     CosmosQueryRequestOptions cosmosQueryRequestOptions
-                        = new CosmosQueryRequestOptions().setMaxDegreeOfParallelism(2);
+                            = new CosmosQueryRequestOptions().setMaxDegreeOfParallelism(2);
                     ArrayList<Track> trackArrayList = new ArrayList<>();
                     CosmosPagedIterable<Track> trackCosmosPagedIterable = cosmosContainer.queryItems(sql, cosmosQueryRequestOptions, Track.class);
                     trackCosmosPagedIterable.forEach(trackArrayList::add);
-                    responseMessage = request.createResponseBuilder(HttpStatus.OK).header("Content-Type", "application/json").body(trackArrayList).build();
+                    responseMessage = request.createResponseBuilder(HttpStatus.OK)
+                            .header("Content-Type", "application/json")
+                            .body(trackArrayList)
+                            .build();
                     break;
                 case "POST":
-                    if(request.getBody().isEmpty()) {
+                    if (request.getBody().isEmpty()) {
                         HashMap<String, String> errorMessage = new HashMap<>();
                         errorMessage.put("errorMessage", "Data is mandatory.");
                         responseMessage = request.createResponseBuilder(HttpStatus.BAD_REQUEST).header("Content-Type", "application/json").body(errorMessage).build();
-                    }
-                    else {
+                    } else {
                         Track track = request.getBody().get();
                         CosmosItemResponse<Track> cosmosItemResponse = cosmosContainer.upsertItem(track);
-                        responseMessage = request.createResponseBuilder(HttpStatusType.custom(cosmosItemResponse.getStatusCode())).header("Content-Type", "application/json").body(track).build();
+                        context.getLogger().info(cosmosItemResponse.getDiagnostics().toString());
+//                        System.out.printf("status [%d] [%s]¥n", cosmosItemResponse.getStatusCode(), cosmosItemResponse.getDiagnostics().toString());
+                        responseMessage = request.createResponseBuilder(HttpStatusType.custom(cosmosItemResponse.getStatusCode()))
+                                .header("Content-Type", "application/json")
+                                .body(track)
+                                .build();
                     }
                     break;
                 case "DELETE":
-                    if(request.getBody().isEmpty()) {
+                    if (request.getBody().isEmpty()) {
                         HashMap<String, String> errorMessage = new HashMap<>();
                         errorMessage.put("errorMessage", "Data is mandatory.");
                         responseMessage = request.createResponseBuilder(HttpStatus.BAD_REQUEST).header("Content-Type", "application/json").body(errorMessage).build();
-                    }
-                    else {
+                    } else {
                         Track track = request.getBody().get();
                         CosmosItemResponse<Object> cosmosItemResponse = cosmosContainer.deleteItem(track.getId(), new PartitionKey(track.getId()), new CosmosItemRequestOptions());
-                        responseMessage = request.createResponseBuilder(HttpStatusType.custom(cosmosItemResponse.getStatusCode())).header("Content-Type", "application/json").body(track).build();
+                        context.getLogger().info(cosmosItemResponse.getDiagnostics().toString());
+//                        System.out.printf("status [%d] [%s]¥n", cosmosItemResponse.getStatusCode(), cosmosItemResponse.getDiagnostics().toString());
+                        responseMessage = request.createResponseBuilder(HttpStatusType.custom(cosmosItemResponse.getStatusCode()))
+                                .header("Content-Type", "application/json").body(track).build();
                     }
                     break;
                 default:
@@ -91,8 +108,7 @@ public class RBACDemo {
                     responseMessage = request.createResponseBuilder(HttpStatus.METHOD_NOT_ALLOWED).header("Content-Type", "application/json").body(errorMessage).build();
                     break;
             }
-        }
-        catch(CosmosException e) {
+        } catch (CosmosException e) {
             context.getLogger().info(e.toString());
         }
         return responseMessage;

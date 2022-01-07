@@ -80,7 +80,7 @@
                     <region>${region}</region>
                     <!-- function pricingTier, default to be consumption if not specified -->
                     <!-- refers https://github.com/microsoft/azure-maven-plugins/wiki/Azure-Functions:-Configuration-Details#supported-pricing-tiers for all valid values -->
-                    <!-- <pricingTier></pricingTier> -->
+                     <pricingTier>EP1</pricingTier>
 
                     <!-- Whether to disable application insights, default is false -->
                     <!-- refers https://github.com/microsoft/azure-maven-plugins/wiki/Azure-Functions:-Configuration-Details for all valid configurations for application insights-->

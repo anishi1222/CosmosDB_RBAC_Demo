@@ -29,7 +29,7 @@ public class RBACDemo {
     private static final String DATABASE = "Inventories";
     private static final String CONTAINER = "Tracks";
 
-    @FunctionName("readwrite")
+    @FunctionName("readonly")
     public HttpResponseMessage run(
             @HttpTrigger(
                 name = "req",
@@ -39,7 +39,7 @@ public class RBACDemo {
             final ExecutionContext context) {
         TokenCredential tokenCredential;
         tokenCredential = new DefaultAzureCredentialBuilder().build();
-        HttpResponseMessage responseMessage = null;
+        HttpResponseMessage responseMessage;
 
         String acountEndPoint = System.getenv("ACCOUNT_ENDPOINT");
         if(acountEndPoint.isEmpty() || acountEndPoint.isBlank()) {
@@ -80,7 +80,8 @@ public class RBACDemo {
                     } else {
                         Track track = request.getBody().get();
                         CosmosItemResponse<Track> cosmosItemResponse = cosmosContainer.upsertItem(track);
-                        context.getLogger().info(cosmosItemResponse.getDiagnostics().toString());
+                        context.getLogger().info("[Diagnostics] " + cosmosItemResponse.getDiagnostics().toString());
+                        context.getLogger().info("[Status Code from CosmosDB]" + cosmosItemResponse.getStatusCode());
 //                        System.out.printf("status [%d] [%s]¥n", cosmosItemResponse.getStatusCode(), cosmosItemResponse.getDiagnostics().toString());
                         responseMessage = request.createResponseBuilder(HttpStatusType.custom(cosmosItemResponse.getStatusCode()))
                                 .header("Content-Type", "application/json")
@@ -96,7 +97,8 @@ public class RBACDemo {
                     } else {
                         Track track = request.getBody().get();
                         CosmosItemResponse<Object> cosmosItemResponse = cosmosContainer.deleteItem(track.getId(), new PartitionKey(track.getId()), new CosmosItemRequestOptions());
-                        context.getLogger().info(cosmosItemResponse.getDiagnostics().toString());
+                        context.getLogger().info("[Diagnostics] " + cosmosItemResponse.getDiagnostics().toString());
+                        context.getLogger().info("[Status Code from CosmosDB] " + cosmosItemResponse.getStatusCode());
 //                        System.out.printf("status [%d] [%s]¥n", cosmosItemResponse.getStatusCode(), cosmosItemResponse.getDiagnostics().toString());
                         responseMessage = request.createResponseBuilder(HttpStatusType.custom(cosmosItemResponse.getStatusCode()))
                                 .header("Content-Type", "application/json").body(track).build();
@@ -110,6 +112,10 @@ public class RBACDemo {
             }
         } catch (CosmosException e) {
             context.getLogger().info(e.toString());
+            responseMessage = request.createResponseBuilder(HttpStatus.valueOf(e.getStatusCode()))
+                    .body(e.getMessage())
+                    .header("content-type", "application/json")
+                    .build();
         }
         return responseMessage;
     }

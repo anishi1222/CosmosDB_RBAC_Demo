@@ -2,7 +2,7 @@
 
 This sample is used in the following blog entries to elaborate interaction with RBAC configured Cosmos DB.
 
-- Japanese [https://logico-jp.io/2021/12/20/use-not-service-principal-but-managed-identity-to-configure-role-based-access-control-for-cosmos-db/](https://logico-jp.io/2021/12/20/use-not-service-principal-but-managed-identity-to-configure-role-based-access-control-for-cosmos-db/)
+- Japanese [https://logico-jp.dev/2025/02/17/use-managed-identity-to-configure-role-based-access-control-for-cosmos-db/](https://logico-jp.dev/2025/02/17/use-managed-identity-to-configure-role-based-access-control-for-cosmos-db/)
 - English [https://medium.com/microsoftazure/configure-rbac-for-cosmos-db-with-managed-identity-instead-of-service-principal-18c0f465f9cd](https://medium.com/microsoftazure/configure-rbac-for-cosmos-db-with-managed-identity-instead-of-service-principal-18c0f465f9cd)
 
 ## How to use
